@@ -14,14 +14,17 @@ function Upload(cb) {
 }
 
 function UploadFile() {
-    
-}
-
-function upload() {
 
 }
+
+function Submit() {
+
+}
+
+
 
 module.exports = {
     Upload: Upload,
-    UploadFile: UploadFile
+    UploadFile: UploadFile,
+    Submit: Submit
 }
