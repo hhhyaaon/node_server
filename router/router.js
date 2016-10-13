@@ -1,5 +1,6 @@
 
 var path = require("path");
+var url = require("url");
 var querystring = require("querystring");
 
 var view = path.join(__dirname, "../view");
@@ -18,6 +19,10 @@ var apiMap = {
     "/api/submit": {
         method: "post",
         action: require(path.join(controller, "./upload.js")).Submit
+    },
+    "/api/getInfoById": {
+        method: "get",
+        action: require(path.join(controller, "./upload.js")).GetInfoById
     }
 }
 
@@ -33,11 +38,8 @@ var router = function (pathname, req, resp) {
         }
         var viewFn = route.action;
         if (typeof viewFn === "function") {
-            viewFn(function (content) {
-                resp.writeHead(200, { "Content-Type": "text/html" });
-                resp.write(content);
-                resp.end();
-            });
+            _handleView(req, resp, viewFn);
+
         }
     } else if (!!api) {
         //数据接口
@@ -47,26 +49,84 @@ var router = function (pathname, req, resp) {
         }
         var apiFn = api.action;
         if (typeof apiFn === "function") {
+
             if (req.method === "GET") {
-                console.log(req);
-                //var query = querystring.parse(postData);
-                apiFn();
+                //get请求
+                _handleGet(req, resp, apiFn);
             } else if (req.method === "POST") {
-                console.log(req);
+                //post 请求
                 //var query = querystring.parse(postData);
-                apiFn();
+                _handlePost(req, resp, apiFn);
             } else {
 
             }
 
         }
     } else {
+        //未找到
         resp.writeHead(404, { "Content-Type": "text/html" });
         resp.write("404 Not Found");
         resp.end();
     }
 };
 
+
+function _handleView(req, resp, handle) {
+    var query = querystring.parse(url.parse(req.url).query);
+    var formArgs = _getFnArgs(handle);
+    var actArgs = formArgs.slice(0, formArgs.length - 1).map(function (name) {
+        return query[name];
+    });
+    handle.apply(this, actArgs.concat(function (content) {
+        resp.writeHead(200, { "Content-Type": "text/html" });
+        resp.write(content);
+        resp.end();
+    }));
+}
+
+
+function _handleGet(req, resp, handle) {
+    var query = querystring.parse(url.parse(req.url).query);
+    var actArgs = _getFnArgs(handle).map(function (name) {
+        return query[name];
+    });
+    var json = handle.apply(this, actArgs);
+
+
+    resp.writeHead(200, { "Content-Type": "application/json" });
+    resp.write(JSON.stringify(json));
+    resp.end();
+}
+
+function _handlePost(req, resp, handle) {
+    var postData = "";
+    req.setEncoding("utf-8");
+    req.addListener("data", function (chunk) {
+        postData += chunk;
+    });
+    req.addListener("end", function () {
+        var query = querystring.parse(postData);
+        var json = handle.call(this, query);
+
+        resp.writeHead(200, { "Content-Type": "application/json" });
+        resp.write(JSON.stringify(json));
+        resp.end();
+    });
+}
+
+function _getFnArgs(fn) {
+    if (typeof fn != "function") {
+        console.error(fn + "is not a function");
+        return;
+    }
+    var argArr = [];
+    fn.toString().replace(/function\s+\w+\s*\((.*)\)/, function (word, $1) {
+        argArr = $1.split(",").map(function (name) {
+            return name.trim();
+        })
+    });
+    return argArr;
+}
 
 module.exports = {
     routeMap: routeMap,

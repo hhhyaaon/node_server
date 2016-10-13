@@ -2,25 +2,62 @@
 <html>
 
 <head>
-    <meta charset="utf-8" />
-    <title>Upload</title>
-    <script src="//cdn.bootcss.com/zepto/1.0rc1/zepto.min.js"></script>
-    <script>
+	<meta charset="utf-8" />
+	<title>Upload</title>
+	<script src="//cdn.bootcss.com/zepto/1.0rc1/zepto.min.js"></script>
+	<script>
         $(function(){
-            console.log($);
+            var $form = $("#form");
+            var field = {
+                name:$form.find("input[name='name']"),
+                age:$form.find("input[name='age']"),
+                file:$form.find("input[name='file']")
+            }
 
-            $("#btn").click(submit);
+            init();
+
+            function init(){
+                var query = getQuery();
+                getInfo(query.id);
+                bind();
+            }
+
+           
+            function bind(){
+                $("#btn").click(submit);
+            }
+
+            function getInfo(id){
+                $.ajax({
+                    type:"get",
+                    url:"/api/getInfoById",
+                    data:{
+                        id:id
+                    },
+                    dataType:"json",
+                    success:function(resp){
+                        if(resp.code===10000){
+                            setData(resp.data);
+                        }else{
+                            alert("获取信息失败");
+                        }
+                    }
+                })
+            }
 
             function submit(){
                 var data = getData();
-
                 $.ajax({
                     type:"post",
                     url:"/api/submit",
                     data:data,
                     dataType:"json",
                     success:function(resp){
-                        console.log(resp);
+                        if(resp.code===10000){
+                            alert("提交成功");
+                        }else{
+                            alert("提交失败");
+                        }
                     }
                 })
             }
@@ -28,34 +65,47 @@
             function getData(){
                 var $form = $("#form");
                 return {
-                    name:$form.find("input[name='name']").val(),
-                    age:$form.find("input[name='age']").val(),
-                    file:$form.find("input[name='file']").val()
+                    name:field.name.val(),
+                    age:field.age.val(),
+                    file:field.file.val()
                 }
             }
+
+            function setData(data){
+                field.name.val(data.name);
+                field.age.val(data.age);
+            }
+
+            function getQuery(){
+                 var query = {};
+                 var href = window.location.href;
+                 var query_str = href.substring(href.lastIndexOf("?") + 1);
+                 query_str.replace(/([^=&?]+)=([^=&?]*)/g, (w, $1, $2) => {
+                     var key = decodeURIComponent($1);
+                     var val = decodeURIComponent($2);
+                     query[key] = val;
+                });
+                 return query;
+             }
         })
     </script>
 </head>
 
 <body>
-    <h1>upload</h1>
-    <ul id="form">
-        <li>
-            <span>姓名:</span>
-            <input name="name" />
-        </li>
-        <li>
-            <span>年龄:</span>
-            <input name="age" />
-        </li>
-        <li>
-            <span>上传:</span>
-            <input type="file" name="file" />
-        </li>
-        <li>
-            <input type="button" id="btn" value="上传" />
-        </li>
-    </ul>
+	<h1>upload</h1>
+	<ul id="form">
+		<li>
+			<span>姓名:</span>
+			<input name="name" />
+		</li>
+		<li>
+			<span>年龄:</span>
+			<input name="age" />
+		</li>
+		<li>
+			<input type="button" id="btn" value="提交" />
+		</li>
+	</ul>
 </body>
 
 </html>

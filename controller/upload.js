@@ -3,22 +3,37 @@ var path = require("path");
 
 var root = path.join(__dirname, "../view");
 
-function Upload(cb) {
-    var view = "empty";
+function Upload(id, cb) {
     f.readFile(path.join(root, "./upload.html"), (err, data) => {
         if (typeof cb === "function") {
-            view = data;
-            cb.call(this, view);
+            cb.call(this, data);
         }
     });
+
 }
 
 function UploadFile() {
 
 }
 
-function Submit() {
+function Submit(form) {
+    return {
+        code: 10000,
+        data: true,
+        msg: "success"
+    }
+}
 
+function GetInfoById(id) {
+    //获取底层
+    return {
+        code: 10000,
+        data: {
+            name: "刘狗狗",
+            age: 100000
+        },
+        msg: "success"
+    }
 }
 
 
@@ -26,5 +41,6 @@ function Submit() {
 module.exports = {
     Upload: Upload,
     UploadFile: UploadFile,
-    Submit: Submit
+    Submit: Submit,
+    GetInfoById: GetInfoById
 }
